@@ -416,6 +416,7 @@ class LatentReasoningGemmaForCausalLM(GemmaForCausalLM):
         max_length: int = 128,
         k: int = DEFAULT_CONFIG["cot_decoding_k"],
         temperature: float = 1.0,
+        max_new_tokens: Optional[int] = None,
         **generation_kwargs
     ) -> str:
         """
@@ -435,9 +436,9 @@ class LatentReasoningGemmaForCausalLM(GemmaForCausalLM):
         """
         # Initialize streamer
         streamer = TextStreamer(tokenizer, skip_prompt=False, skip_special_tokens=False)
-        
+
         # Tokenize input
-        inputs = tokenizer(question, max_length=max_length, return_tensors="pt").to(model.device)
+        inputs = tokenizer(question, return_tensors="pt").to(model.device)
         input_ids = inputs["input_ids"]
         attention_mask = inputs["attention_mask"]
 
@@ -472,17 +473,29 @@ class LatentReasoningGemmaForCausalLM(GemmaForCausalLM):
             ], dim=1)
             
             # Generate with streamer for best path
-            outputs = model.generate(
-                input_ids=curr_input_ids,
-                attention_mask=curr_attention_mask,
-                max_length=max_length,
-                pad_token_id=tokenizer.pad_token_id,
-                eos_token_id=tokenizer.eos_token_id,
-                output_scores=True,
-                return_dict_in_generate=True,
-                streamer=streamer if i == 0 else None,  # Only stream first path
-                **generation_kwargs
-            )
+            if max_new_tokens is not None:
+                outputs = model.generate(
+                    input_ids=curr_input_ids,
+                    attention_mask=curr_attention_mask,
+                    max_new_tokens=max_new_tokens,
+                    pad_token_id=tokenizer.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id,
+                    output_scores=True,
+                    return_dict_in_generate=True,
+                    streamer=streamer if i == 0 else None,  # Only stream first path
+                    **generation_kwargs
+                )
+            else:
+                outputs = model.generate(
+                    input_ids=curr_input_ids,
+                    attention_mask=curr_attention_mask,
+                    max_length=max_length,
+                    pad_token_id=tokenizer.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id,
+                    output_scores=True,
+                    return_dict_in_generate=True,
+                    **generation_kwargs
+                )
             
             # Calculate confidence for this path
             _, confidence = self.calculate_answer_confidence(
