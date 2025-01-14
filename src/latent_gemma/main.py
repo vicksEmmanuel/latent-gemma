@@ -413,7 +413,7 @@ class LatentReasoningGemmaForCausalLM(GemmaForCausalLM):
         model: PreTrainedModel,
         tokenizer: PreTrainedTokenizer,
         question: str,
-        max_length: int = 128,
+        max_length: Optional[int] = None,
         k: int = DEFAULT_CONFIG["cot_decoding_k"],
         temperature: float = 1.0,
         max_new_tokens: Optional[int] = None,
