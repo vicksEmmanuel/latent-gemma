@@ -480,6 +480,7 @@ class LatentReasoningGemmaForCausalLM(GemmaForCausalLM):
                     max_new_tokens=max_new_tokens,
                     pad_token_id=tokenizer.pad_token_id,
                     eos_token_id=tokenizer.eos_token_id,
+                    max_length=None,
                     output_scores=True,
                     return_dict_in_generate=True,
                     streamer=streamer if i == 0 else None,  # Only stream first path
